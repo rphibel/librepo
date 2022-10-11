@@ -1439,10 +1439,13 @@ void
 maybe_transcode(LrTarget *target, GError **err)
 {
     const char *e = g_getenv("LIBREPO_TRANSCODE_RPMS");
+    const char *e_denylist = g_getenv("LIBREPO_TRANSCODE_RPMS_DENYLIST");
     int transcoder_stdin[2], fd;
     pid_t pid;
     FILE *out;
     _cleanup_strv_free_ gchar **args = NULL;
+    _cleanup_strv_free_ gchar **denylist = NULL;
+    guint i;
     target->writef = NULL;
     if (!e) {
         g_debug("Not transcoding");
@@ -1453,6 +1456,14 @@ maybe_transcode(LrTarget *target, GError **err)
         g_debug("Not transcoding %s due to name", target->target->path);
         target->writef = target->f;
         return;
+    }
+    denylist = g_strsplit(e_denylist, ",", -1);
+    for (i = 0; denylist[i] != NULL; i++) {
+        if (g_strrstr(target->target->path, denylist[i]) != NULL) {
+            g_debug("Not transcoding: name '%s' matches denylist item '%s'", target->target->path, denylist[i]);
+            target->writef = target->f;
+            return;
+        }
     }
     g_debug("Transcoding %s", target->target->path);
     args = g_strsplit(e, " ", -1);
