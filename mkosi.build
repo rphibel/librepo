@@ -1,0 +1,6 @@
+#!/bin/bash
+mkdir build
+cd build/
+cmake -DWITH_ZCHUNK=OFF ..
+make
+make install
